@@ -308,7 +308,10 @@ function staticPhaseGraphPlot(loadrs,loadrg){
 		alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
 		spct.beginPath();
 		spct.strokeStyle="rgb(255,0,0)";
-		if(i==0)lo=-alpha*400+410;
+		if(i==0){
+			if(alpha>1)alpha=1;
+			lo=-alpha*400+410;
+		}
 		if(alpha<=1){
 			spct.moveTo(i*400/plot+45,lo);
 			spct.lineTo((i+1)*400/plot+45,-alpha*400+410);
