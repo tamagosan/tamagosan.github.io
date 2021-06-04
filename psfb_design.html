@@ -1,0 +1,526 @@
+<!DOCTYPE html><!--なに覗いてんねん-->
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<style>
+a{
+	font-size:20px;
+}
+button{
+	appearance: none;
+	border:0;
+	border-radius:3px;
+	background:#80a0ee;
+	color:#fff;
+	padding:8px16px;
+	font-size:16px;
+	width:100px;
+	height:40px;
+}
+canvas{
+	background:#ffffff;
+}
+</style>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    TeX: { equationNumbers: { autoNumber: "AMS" }},
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { matchFontHeight: false },
+    displayAlign: "left",
+    displayIndent: "2em"
+  });
+</script>
+<title>PSFBコンバータ設計支援ツール</title>
+</head><body bgcolor="#ffffee">
+<h1>PSFBコンバータ設計支援ツール</h1>
+[注意] 電流連続モードでの状態平均化法による計算方法を利用しているため、二次側インダクタLdの電流リプル率、平滑コンデンサCdの電圧リプル率が十分低い前提とするパラメータを入力してください。<br>
+<table><tr><td>
+SI接頭辞:p,n,u,m,k,M
+<form name="val">
+<table>
+<tr><td>$V_{in}$</td><td><input name="Vin">V</td></tr>
+<tr><td>$V_{out}$</td><td><input name="Vout">V</td></tr>
+<tr><td>$L_d$</td><td><input name="Ld">H</td></tr>
+<tr><td>$C_d$</td><td><input name="Cd">F</td></tr>
+<tr><td>$R$</td><td><input name="R">Ω</td></tr>
+<tr><td>$R_C$</td><td><input name="Rc">Ω</td></tr>
+<tr><td>$n$</td><td><input name="n"></td></tr>
+<tr><td>$C_{Qa}$</td><td><input name="CQa">F</td></tr>
+<tr><td>$C_{Qb}$</td><td><input name="CQb">F</td></tr>
+<tr><td>$L_l$</td><td><input name="Ll">H</td></tr>
+<tr><td>$f_{sw}$</td><td><input name="fsw">Hz</td></tr>
+</table>
+</form>
+</td><td><img width=600 src="psfb_design_fig.png"></td></tr></table>
+<br><button style="width:200px;height:50px;" onClick="allc();">一括計算</button><br><br>
+<a href="#zvs">ZVS可能範囲</a><br>
+<a href="#vout">出力電圧/位相シフト率 定常特性</a><br>
+<a href="#phase">位相シフト率/負荷 定常特性</a><br>
+<a href="#tf">出力電圧/位相シフト率 小信号伝達関数・周波数応答</a><br>
+
+<hr><h2 id="zvs">ZVS可能範囲</h2>
+<canvas id="zvsgraph" width="480" height="450"></canvas><br>
+最適デッドタイム：<span id="bdt"></span> ns<br>
+必要最小負荷：<span id="mlr"></span> Ω<br>
+<form name="zvsf">
+デッドタイム範囲<input name="dts" type="number" value="400">ns<br>
+負荷抵抗範囲<input name="rs" type="number" value="2">～<input name="rg" type="number" value="10">Ω<br>
+目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
+</form><br>
+<button style="" onClick="zvsGraph(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value,document.zvsf.lat.value,document.zvsf.mer.value);zvsGraphPlot(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value);">計算</button>
+<button onClick="window.scrollTo(0,0);">値入力へ</button>
+
+<hr><h2 id="vout">出力電圧/位相シフト率 定常特性</h2>
+<canvas id="staticvoltgraph" width="480" height="450"></canvas><br>
+$V_{out}=$<span id="Vout"></span> $\mathrm{V}$ の場合 $\alpha=$<span id="valpha"></span><br>
+<span id="verror"></span>
+<form name="voltf">
+出力電圧範囲<input name="vom" type="number" value="50">V<br>
+目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
+</form><br>
+<button onClick="staticVoltGraph(document.voltf.vom.value,document.voltf.lat.value,document.voltf.mer.value);staticVoltGraphPlot(document.voltf.vom.value);">計算</button>
+<button onClick="window.scrollTo(0,0);">値入力へ</button>
+
+<hr><h2 id="phase">位相シフト率/負荷 定常特性</h2>
+<canvas id="staticphasegraph" width="480" height="450"></canvas><br>
+$R=$<span id="R"></span> $\mathrm{\Omega}$ の場合 $\alpha=$<span id="palpha"></span><br>
+<span id="perror"></span>
+<form name="phasef">
+負荷抵抗範囲<input name="rs" type="number" value="2">～<input name="rg" type="number" value="10">Ω<br>
+目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
+</form><br>
+<button onClick="staticPhaseGraph(document.phasef.rs.value,document.phasef.rg.value,document.phasef.lat.value,document.phasef.mer.value);staticPhaseGraphPlot(document.phasef.rs.value,document.phasef.rg.value);">計算</button>
+<button onClick="window.scrollTo(0,0);">値入力へ</button>
+
+<hr><h2 id="tf">出力電圧/位相シフト率 小信号伝達関数・周波数応答</h2>
+<canvas id="bode" width="480" height="420"></canvas>
+<table><tr><td width=250>
+\[
+\frac{\mathit{\Delta}\overline{v_{out}}(s)}{\mathit{\Delta}\alpha(s)}=\frac{b_1s+b_0}{a_2s^2+a_1s+a_0}
+\]
+$a_0=$<span id="a0t"></span><br>
+$a_1=$<span id="a1t"></span><br>
+$a_2=$<span id="a2t"></span><br>
+$b_0=$<span id="b0t"></span><br>
+$b_1=$<span id="b1t"></span><br>
+</td><td>
+<br>極<br>
+$p_1=$<span id="p1t"></span><br>
+$f_{p_1}=$<span id="fp1t"></span> $\mathrm{Hz}$<br>
+$p_2=$<span id="p2t"></span><br>
+$f_{p_2}=$<span id="fp2t"></span> $\mathrm{Hz}$<br>
+<br>零点<br>
+$z=$<span id="z1t"></span><br>
+$f_{z}=$<span id="fz1t"></span> $\mathrm{Hz}$<br>
+</td></tr></table>
+<form name="tf">
+LTspice用伝達関数<input type="text" name="ltstf" style="width:500px;background-color:#ffffee" readonly>
+</form><br>
+<button onClick="bode();bodePlot();">計算</button>
+<button onClick="window.scrollTo(0,0);">値入力へ</button>
+
+<script>
+var i,j;
+var zvsct=document.getElementById('zvsgraph').getContext('2d');
+var svct=document.getElementById('staticvoltgraph').getContext('2d');
+var spct=document.getElementById('staticphasegraph').getContext('2d');
+var bct=document.getElementById('bode').getContext('2d');
+var param=new Array(11);
+var Vin,Vout,Ld,Cd,R,Rc,n,CQ1,CQ2,Ll,fsw;
+
+function zvsGraph(dts,loadrs,loadrg,lat,mer){
+	dts=Number(dts);
+	if(dts<0)dts=0;
+	loadrs=Number(loadrs);
+	loadrg=Number(loadrg);
+	if(loadrs<0)loadrs=0;
+	if(loadrg<loadrs)loadrg=loadrs;
+	lat=Math.floor(lat)+1;
+	if(lat<1)lat=1;
+	mer=Math.floor(mer)+1;
+	if(mer<1)mer=1;
+	
+	zvsct.clearRect(0,0,480,450);
+	zvsct.beginPath();
+	zvsct.strokeStyle="rgb(0,0,0)";
+	for(i=0;i<=lat;i++){
+		zvsct.moveTo(45,i*(400/lat)+10);
+		zvsct.lineTo(445,i*(400/lat)+10);
+		zvsct.fillText(Math.floor((dts/lat*i)*10)/10,16,410-i*(400/lat));
+	}
+	for(i=0;i<=mer;i++){
+		zvsct.moveTo(i*(400/mer)+45,10);
+		zvsct.lineTo(i*(400/mer)+45,410);
+		zvsct.fillText(Math.floor(((loadrg-loadrs)/mer*i+loadrs)*10)/10,i*(400/mer)+40,420);
+	}
+	zvsct.stroke();
+	zvsct.rotate(-Math.PI/2);
+    zvsct.fillText("デッドタイム [ns]",-245,12);
+	zvsct.rotate(Math.PI/2);
+	zvsct.fillText("負荷抵抗R [Ω]",213,435);
+}
+function zvsGraphPlot(dts,loadrs,loadrg){
+	dts=Number(dts);
+	loadrs=Number(loadrs);
+	loadrg=Number(loadrg);
+	if(dts<0)dts=0;
+	if(loadrs<0)loadrs=0;
+	if(loadrg<loadrs)loadrg=loadrs;
+
+	var p;
+	var plot=400;
+	var T1,T2;
+	var t1lo,t2lo;
+	var pls,plg;
+	paramSet();
+	for(i=0;i<plot;i++){
+		R=i/(plot/(loadrg-loadrs))+loadrs;
+		p=Vin*R/(Vout*n);
+		T1=Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll));
+		T2=T1+Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll));
+		zvsct.beginPath();
+		zvsct.strokeStyle="rgb(255,100,100)";
+		pls=410-T1*100/(dts/(4e+9));
+		plg=410-T2*100/(dts/(4e+9));
+		if(pls<10)pls=10;
+		if(plg<10)plg=10;
+		zvsct.moveTo(i*400/plot+45,pls);
+		zvsct.lineTo(i*400/plot+45,plg);
+		zvsct.stroke();
+	}
+	document.getElementById("bdt").innerText=(Math.sqrt(Ll*CQ2)/2*(Math.PI+1)*(1e+9)).toFixed(3);
+	document.getElementById("mlr").innerText=(Vout*n/Vin*Math.sqrt(Ll/CQ2)).toFixed(3);
+}
+
+function staticVoltGraph(vomax,lat,mer){
+	vomax=Number(vomax);
+	if(vomax<0)vomax=0;
+	lat=Math.floor(lat)+1;
+	if(lat<1)lat=1;
+	mer=Math.floor(mer)+1;
+	if(mer<1)mer=1;
+	
+	svct.clearRect(0,0,480,450);
+	svct.beginPath();
+	svct.strokeStyle="rgb(0,0,0)";
+	for(i=0;i<=lat;i++){
+		svct.moveTo(45,i*(400/lat)+10);
+		svct.lineTo(445,i*(400/lat)+10);
+		svct.fillText(Math.floor((vomax/lat*i)*10)/10,16,410-i*(400/lat));
+	}
+	for(i=0;i<=mer;i++){
+		svct.moveTo(i*(400/mer)+45,10);
+		svct.lineTo(i*(400/mer)+45,410);
+		svct.fillText(Math.floor(i/mer*100)/100,i*(400/mer)+40,420);
+	}
+	svct.stroke();
+	svct.rotate(-Math.PI/2);
+    svct.fillText("出力電圧Vout [V]",-247,12);
+	svct.rotate(Math.PI/2);
+	svct.fillText("位相シフト率α",213,435);
+}
+function staticVoltGraphPlot(vomax){
+	vomax=Number(vomax);
+	if(vomax<0)vomax=0;
+	
+	var mu,p;
+	var lo;
+	var alpha=0,voutx=0;
+	paramSet();
+	while((alpha<1 || isNaN(alpha)) && voutx<=vomax){
+		p=Vin*R/(voutx*n);
+		mu=voutx*(R+Math.pow(n*p,2)*fsw*CQ1)/(Vin*n*R);
+		alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
+		svct.beginPath();
+		svct.strokeStyle="rgb(255,0,0)";
+		if(alpha>1)alpha=1;
+		if(voutx==0)lo=alpha*400+45;
+		if(-voutx*400/vomax+410>10){
+			svct.moveTo(lo,-voutx*400/vomax+410);
+			svct.lineTo(alpha*400+45,-voutx*400/vomax+409);
+		}
+		lo=alpha*400+45;
+		voutx+=vomax/400;
+		svct.stroke();
+	}
+	p=Vin*R/(Vout*n);
+	mu=Vout*(R+Math.pow(n*p,2)*fsw*CQ1)/(Vin*n*R);
+	alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
+	document.getElementById("Vout").innerText=Vout;
+	if(alpha>1){
+		document.getElementById("verror").innerHTML="<font color=red>この条件では"+Vout+"Vの出力電圧を得ることはできません。</font><br>";
+		document.getElementById("valpha").innerText="";
+	}else{
+		document.getElementById("verror").innerHTML="";
+		document.getElementById("valpha").innerText=alpha.toFixed(3);
+	}
+}
+
+function staticPhaseGraph(loadrs,loadrg,lat,mer){
+	loadrs=Number(loadrs);
+	loadrg=Number(loadrg);
+	if(loadrs<0)loadrs=0;
+	if(loadrg<loadrs)loadrg=loadrs;
+	lat=Math.floor(lat)+1;
+	if(lat<1)lat=1;
+	mer=Math.floor(mer)+1;
+	if(mer<1)mer=1;
+
+	spct.clearRect(0,0,480,450);
+	spct.beginPath();
+	spct.strokeStyle="rgb(0,0,0)";
+	for(i=0;i<=lat;i++){
+		spct.moveTo(45,i*(400/lat)+10);
+		spct.lineTo(445,i*(400/lat)+10);
+		spct.fillText(Math.floor(i/lat*100)/100,20,410-i*(400/lat));
+	}
+	for(i=0;i<=mer;i++){
+		spct.moveTo(i*(400/mer)+45,10);
+		spct.lineTo(i*(400/mer)+45,410);
+		spct.fillText(Math.floor(((loadrg-loadrs)/mer*i+loadrs)*10)/10,i*(400/mer)+40,420);
+	}
+	spct.stroke();
+	spct.rotate(-Math.PI/2);
+    spct.fillText("位相シフト率α",-240,14);
+	spct.rotate(Math.PI/2);
+	spct.fillText("負荷抵抗R [Ω]",213,435);
+}
+function staticPhaseGraphPlot(loadrs,loadrg){
+	loadrs=Number(loadrs);
+	loadrg=Number(loadrg);
+	if(loadrs<0)loadrs=0;
+	if(loadrg<loadrs)loadrg=loadrs;
+	
+	var mu,p;
+	var plot=400;
+	var lo;
+	var alpha=0.5;
+	var Rx;
+	paramSet();
+	for(i=0;i<plot;i++){
+		Rx=(loadrg-loadrs)*i/plot+loadrs;
+		p=Vin*Rx/(Vout*n);
+		mu=Vout*(Rx+Math.pow(n*p,2)*fsw*CQ1)/(Vin*n*Rx);
+		alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
+		spct.beginPath();
+		spct.strokeStyle="rgb(255,0,0)";
+		if(i==0)lo=-alpha*400+410;
+		if(alpha<=1){
+			spct.moveTo(i*400/plot+45,lo);
+			spct.lineTo((i+1)*400/plot+45,-alpha*400+410);
+		}
+		lo=-alpha*400+410;
+		spct.stroke();
+	}
+	p=Vin*R/(Vout*n);
+	mu=Vout*(R+Math.pow(n*p,2)*fsw*CQ1)/(Vin*n*R);
+	alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
+	document.getElementById("R").innerText=R;
+	if(alpha>1){
+		document.getElementById("perror").innerHTML="<font color=red>この条件では"+R+"Ωの負荷が接続されている場合"+Vout+"Vの出力電圧を得ることはできません。</font><br>";
+		document.getElementById("palpha").innerText="";
+	}else{
+		document.getElementById("perror").innerHTML="";
+		document.getElementById("palpha").innerText=alpha.toFixed(3);
+	}
+}
+
+function bode(){
+	bct.clearRect(0,0,480,420);
+	bct.beginPath();
+	bct.strokeStyle="rgb(0,0,0)";
+	bct.fillText(10,40,200);
+	for(i=0;i<4;i++){
+		for(j=1;j<=10;j++){
+			bct.moveTo(i*100+Math.log10(j)*100+45,10);
+			bct.lineTo(i*100+Math.log10(j)*100+45,190);
+		}
+		bct.fillText(Math.pow(10,i+2),(i+1)*100+30,200);
+	}
+	for(i=0;i<7;i++){
+		bct.moveTo(45,i*30+10);
+		bct.lineTo(445,i*30+10);
+		bct.fillText(20*(-i)+60,25,i*30+10);
+	}
+	
+	bct.fillText(10,40,400);
+	for(i=0;i<4;i++){
+		for(j=1;j<=10;j++){
+			bct.moveTo(i*100+Math.log10(j)*100+45,210);
+			bct.lineTo(i*100+Math.log10(j)*100+45,390);
+		}
+		bct.fillText(Math.pow(10,i+2),(i+1)*100+30,400);
+	}
+	for(i=0;i<7;i++){
+		bct.moveTo(45,i*30+210);
+		bct.lineTo(445,i*30+210);
+		bct.fillText(45*(-i)+45,20,i*30+210);
+	}
+	bct.stroke();
+	bct.rotate(-Math.PI/2);
+    bct.fillText("利得 [dB]",-124,14);
+	bct.fillText("位相 [deg]",-324,14);
+	bct.rotate(Math.PI/2);
+	bct.fillText("周波数 [Hz]",220,415);
+}
+
+function bodePlot(){
+	var glo,plo;
+	var plot=400;
+	var gamma,psi,p
+	var a0,a1,a2;
+	var b0,b1;
+	var gain,phase;
+	
+	paramSet();
+	gamma=R/(R+Rc);
+	p=Vin*R/(Vout*n);
+	psi=n*n*fsw*(p*p*CQ1+2*Ll*(1+Math.sqrt(1-p*p*CQ2/Ll)));
+	
+	a2=Ld*Cd;
+	a1=gamma*(Cd*Rc+Ld/R)+psi*Cd;
+	a0=gamma*(gamma+(gamma*Rc+psi)/R);
+	b1=Vin*n*gamma*Cd*Rc;
+	b0=Vin*n*gamma;
+	for(i=0;i<plot;i++){
+		omega=2*Math.PI*Math.pow(Math.pow(10000,1/plot),i)*10;
+		bct.beginPath();
+		bct.strokeStyle="rgb(255,0,0)";
+		gain=Math.sqrt(Math.pow(omega*b1,2)+Math.pow(b0,2))/Math.sqrt(Math.pow(-omega*omega*a2+a0,2)+Math.pow(a1*omega,2));
+		if(i==0)glo=-20*Math.log10(gain)*3/2+100;
+		if(glo>10 && glo<190){
+			bct.moveTo(i*400/plot+45,glo);
+			bct.lineTo((i+1)*400/plot+45,-20*Math.log10(gain)*3/2+100);
+		}
+		glo=-20*Math.log10(gain)*3/2+100;
+		bct.stroke();
+		
+		bct.beginPath();
+		phase=-Math.atan2(omega*b1*(-(omega*omega)*a2+a0)-b0*a1*omega,b0*(-(omega*omega)*a2+a0)+omega*b1*a1*omega);
+		if(i==0)plo=phase*120/Math.PI+240;
+		bct.moveTo(i*400/plot+45,plo);
+		bct.lineTo((i+1)*400/plot+45,phase*120/Math.PI+240);
+		plo=phase*120/Math.PI+240;
+		bct.stroke();
+	}
+	if(b1!=0){
+		document.tf.ltstf.value="Laplace=("+b1+"*s+"+b0+")/("+a2+"*s^2+"+a1+"*s+"+a0+")";
+	}else{
+		document.tf.ltstf.value="Laplace="+b0+"/("+a2+"*s^2+"+a1+"*s+"+a0+")";
+	}
+	document.getElementById("a0t").innerText=a0;
+	document.getElementById("a1t").innerText=a1;
+	document.getElementById("a2t").innerText=a2;
+	document.getElementById("b0t").innerText=b0;
+	document.getElementById("b1t").innerText=b1;
+	
+	if(a1*a1-4*a2*a0>=0){
+		document.getElementById("p1t").innerText=((-a1+Math.sqrt(a1*a1-4*a2*a0))/(2*a2)).toFixed(4);
+		document.getElementById("fp1t").innerText=Math.abs((-a1+Math.sqrt(a1*a1-4*a2*a0))/(4*a2*Math.PI)).toFixed(4);
+		document.getElementById("p2t").innerText=((-a1-Math.sqrt(a1*a1-4*a2*a0))/(2*a2)).toFixed(4);
+		document.getElementById("fp2t").innerText=Math.abs((-a1-Math.sqrt(a1*a1-4*a2*a0))/(4*a2*Math.PI)).toFixed(4);
+	}else{
+		document.getElementById("p1t").innerText=(-a1/(2*a2)).toFixed(4)+"+j"+(Math.sqrt(4*a2*a0-a1*a1)/(2*a2)).toFixed(4);
+		document.getElementById("fp1t").innerText=(Math.sqrt(Math.pow(-a1/(2*a2),2)+Math.pow(Math.sqrt(4*a2*a0-a1*a1)/(2*a2),2))/(2*Math.PI)).toFixed(4);
+		document.getElementById("p2t").innerText=(-a1/(2*a2)).toFixed(4)+"-j"+(Math.sqrt(4*a2*a0-a1*a1)/(2*a2)).toFixed(4);
+		document.getElementById("fp2t").innerText=(Math.sqrt(Math.pow(-a1/(2*a2),2)+Math.pow(Math.sqrt(4*a2*a0-a1*a1)/(2*a2),2))/(2*Math.PI)).toFixed(4);
+	}
+	
+	if(b1!=0){
+		document.getElementById("z1t").innerText=(-b0/b1).toFixed(4);
+		document.getElementById("fz1t").innerText=(b0/(2*Math.PI*b1)).toFixed(4);
+	}else{
+		document.getElementById("z1t").innerText="";
+		document.getElementById("fz1t").innerText="";
+	}
+}
+
+function paramSet(){
+	param[0]=document.val.Vin.value;
+	param[1]=document.val.Vout.value;
+	param[2]=document.val.Ld.value;
+	param[3]=document.val.Cd.value;
+	param[4]=document.val.R.value;
+	param[5]=document.val.Rc.value;
+	param[6]=document.val.n.value;
+	param[7]=document.val.CQa.value;
+	param[8]=document.val.CQb.value;
+	param[9]=document.val.Ll.value;
+	param[10]=document.val.fsw.value;
+	
+	for(i=0;i<=10;i++){
+		if(isNaN(param[i].substr(param[i].length-1,1))){
+			switch(param[i].substr(param[i].length-1,1)){
+				case "p":
+					param[i]=param[i].substr(0,param[i].length-1)+"e-12";
+					break;
+				case "n":
+					param[i]=param[i].substr(0,param[i].length-1)+"e-9";
+					break;
+				case "u":
+				case "μ":
+					param[i]=param[i].substr(0,param[i].length-1)+"e-6";
+					break;
+				case "m":
+					param[i]=param[i].substr(0,param[i].length-1)+"e-3";
+					break;
+				case "k":
+				case "K":
+					param[i]=param[i].substr(0,param[i].length-1)+"e+3";
+				break;
+				case "M":
+					param[i]=param[i].substr(0,param[i].length-1)+"e+6";
+				break;
+				default:
+					param[i]=param[i].substr(0,param[i].length-1);
+			}
+		}
+	}
+	Vin=Number(param[0]);
+	Vout=Number(param[1]);
+	Ld=Number(param[2]);
+	Cd=Number(param[3]);
+	R=Number(param[4]);
+	Rc=Number(param[5]);
+	n=Number(param[6]);
+	CQ1=Number(param[7])*2;
+	CQ2=Number(param[8])*2;
+	Ll=Number(param[9]);
+	fsw=Number(param[10]);
+	
+	//デバッグ用
+	/*Vin=300;
+	Vout=30;
+	Ld=20e-6;
+	Cd=5000e-6;
+	R=0.6;
+	Rc=0.01;
+	n=0.2;
+	CQ1=140e-12;
+	CQ2=140e-12;
+	Ll=50e-6;
+	fsw=25000;*/
+}
+
+function allc(){
+	zvsGraph(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value,document.zvsf.lat.value,document.zvsf.mer.value);
+	zvsGraphPlot(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value);
+	staticVoltGraph(document.voltf.vom.value,document.voltf.lat.value,document.voltf.mer.value);
+	staticVoltGraphPlot(document.voltf.vom.value);
+	staticPhaseGraph(document.phasef.rs.value,document.phasef.rg.value,document.phasef.lat.value,document.phasef.mer.value);
+	staticPhaseGraphPlot(document.phasef.rs.value,document.phasef.rg.value);
+	bode();
+	bodePlot();
+}
+
+bode();
+zvsGraph(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value,document.zvsf.lat.value,document.zvsf.mer.value);
+staticVoltGraph(document.voltf.vom.value,document.voltf.lat.value,document.voltf.mer.value);
+staticPhaseGraph(document.phasef.rs.value,document.phasef.rg.value,document.phasef.lat.value,document.phasef.mer.value);
+</script>
+</body></html>
