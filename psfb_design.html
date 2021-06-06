@@ -19,6 +19,9 @@ button{
 canvas{
 	background:#ffffff;
 }
+span.cal{
+	font-weight: bold;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 </script>
@@ -37,7 +40,8 @@ canvas{
 <title>PSFBコンバータ設計支援ツール</title>
 </head><body bgcolor="#ffffee">
 <h1>PSFBコンバータ設計支援ツール</h1>
-[注意] 電流連続モードでの状態平均化法による計算方法を利用しているため、二次側インダクタLdの電流リプル率、平滑コンデンサCdの電圧リプル率が十分低い前提とするパラメータを入力してください。<br>
+[注意] 電流連続モードでの状態平均化法による計算をします。電流連続モードかつZVS可能な条件で使用してください。<br>
+
 <table><tr><td>
 SI接頭辞:p,n,u,m,k,M
 <form name="val">
@@ -57,27 +61,48 @@ SI接頭辞:p,n,u,m,k,M
 </form>
 </td><td><img width=600 src="psfb_design_fig.png"></td></tr></table>
 <br><button style="width:200px;height:50px;" onClick="allc();">一括計算</button><br><br>
-<a href="#zvs">ZVS可能範囲</a><br>
-<a href="#vout">出力電圧/位相シフト率 定常特性</a><br>
-<a href="#phase">位相シフト率/負荷 定常特性</a><br>
-<a href="#tf">出力電圧/位相シフト率 小信号伝達関数・周波数応答</a><br>
+<ul>
+<li><a href="#ripple">二次側平滑素子リプル電圧/電流</a></li>
+<li><a href="#zvs">ZVS可能範囲</a></li>
+<li><a href="#vout">出力電圧/位相シフト率 定常特性</a></li>
+<li><a href="#phase">位相シフト率/負荷 定常特性</a></li>
+<li><a href="#tf">出力電圧/位相シフト率 小信号伝達関数・周波数応答</a></li>
+</ul>
+
+<hr><h2 id="ripple">二次側平滑素子リプル電圧/電流</h2>
+インダクタ電圧両振幅に対して出力電圧リプル両振幅が十分小さい仮定で計算しています。<br>
+(出力電圧リプル両振幅/インダクタ電圧両振幅=<span id="ripplevoltd" class="cal"></span>)<br>
+<span id="riperror" class="cal"></span><br>
+<table>
+<tr><td>位相シフト率$\alpha$</td><td><span id="ralpha" class="cal"></span></td></tr>
+<tr><td>インダクタ電流平均値</td><td><span id="Lcurrentave" class="cal"></span> A</td></tr>
+<tr><td>インダクタ電流最大値</td><td><span id="Lcurrentpeak" class="cal"></span> A</td></tr>
+<tr><td>インダクタ電流リプル両振幅</td><td><span id="Lripplecurrentpp" class="cal"></span> Ap-p</td></tr>
+<tr><td>インダクタ電流リプル率</td><td><span id="Lripplecurrentd" class="cal"></span></td></tr>
+<tr><td>コンデンサリプル電流両振幅</td><td><span id="Cripplecurrentpp" class="cal"></span> Ap-p</td></tr>
+<tr><td>コンデンサリプル電流実効値</td><td><span id="Cripplecurrentrms" class="cal"></span> A</td></tr>
+<tr><td>出力電圧リプル両振幅</td><td><span id="Voutripplepp" class="cal"></span> Vp-p</td></tr>
+<tr><td>出力電圧リプル率</td><td><span id="Voutrippled" class="cal"></span></td></tr>
+</table>
+<button onClick="ripple();">計算</button>
+<button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <hr><h2 id="zvs">ZVS可能範囲</h2>
 <canvas id="zvsgraph" width="480" height="450"></canvas><br>
-最適デッドタイム：<span id="bdt"></span> ns<br>
-必要最小負荷：<span id="mlr"></span> Ω<br>
+最適デッドタイム：<span id="bdt" class="cal"></span> ns<br>
+必要最小負荷：<span id="mlr" class="cal"></span> Ω<br>
 <form name="zvsf">
 デッドタイム範囲<input name="dts" type="number" value="400">ns<br>
 負荷抵抗範囲<input name="rs" type="number" value="2">～<input name="rg" type="number" value="10">Ω<br>
 目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
 </form><br>
-<button style="" onClick="zvsGraph(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value,document.zvsf.lat.value,document.zvsf.mer.value);zvsGraphPlot(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value);">計算</button>
+<button onClick="zvsGraph(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value,document.zvsf.lat.value,document.zvsf.mer.value);zvsGraphPlot(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value);">計算</button>
 <button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <hr><h2 id="vout">出力電圧/位相シフト率 定常特性</h2>
 <canvas id="staticvoltgraph" width="480" height="450"></canvas><br>
-$V_{out}=$<span id="Vout"></span> $\mathrm{V}$ の場合 $\alpha=$<span id="valpha"></span><br>
-<span id="verror"></span>
+$V_{out}=$<span id="Vout" class="cal"></span> $\mathrm{V}$ の場合 $\alpha=$<span id="valpha" class="cal"></span><br>
+<span id="verror" class="cal"></span>
 <form name="voltf">
 出力電圧範囲<input name="vom" type="number" value="50">V<br>
 目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
@@ -87,8 +112,8 @@ $V_{out}=$<span id="Vout"></span> $\mathrm{V}$ の場合 $\alpha=$<span id="valp
 
 <hr><h2 id="phase">位相シフト率/負荷 定常特性</h2>
 <canvas id="staticphasegraph" width="480" height="450"></canvas><br>
-$R=$<span id="R"></span> $\mathrm{\Omega}$ の場合 $\alpha=$<span id="palpha"></span><br>
-<span id="perror"></span>
+$R=$<span id="R" class="cal"></span> $\mathrm{\Omega}$ の場合 $\alpha=$<span id="palpha" class="cal"></span><br>
+<span id="perror" class="cal"></span>
 <form name="phasef">
 負荷抵抗範囲<input name="rs" type="number" value="2">～<input name="rg" type="number" value="10">Ω<br>
 目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
@@ -98,24 +123,24 @@ $R=$<span id="R"></span> $\mathrm{\Omega}$ の場合 $\alpha=$<span id="palpha">
 
 <hr><h2 id="tf">出力電圧/位相シフト率 小信号伝達関数・周波数応答</h2>
 <canvas id="bode" width="480" height="420"></canvas>
-<table><tr><td width=250>
+<table><tr><td width=300>
 \[
 \frac{\mathit{\Delta}\overline{v_{out}}(s)}{\mathit{\Delta}\alpha(s)}=\frac{b_1s+b_0}{a_2s^2+a_1s+a_0}
 \]
-$a_0=$<span id="a0t"></span><br>
-$a_1=$<span id="a1t"></span><br>
-$a_2=$<span id="a2t"></span><br>
-$b_0=$<span id="b0t"></span><br>
-$b_1=$<span id="b1t"></span><br>
+$a_0=$<span id="a0t" class="cal"></span><br>
+$a_1=$<span id="a1t" class="cal"></span><br>
+$a_2=$<span id="a2t" class="cal"></span><br>
+$b_0=$<span id="b0t" class="cal"></span><br>
+$b_1=$<span id="b1t" class="cal"></span><br>
 </td><td>
 <br>極<br>
-$p_1=$<span id="p1t"></span><br>
-$f_{p_1}=$<span id="fp1t"></span> $\mathrm{Hz}$<br>
-$p_2=$<span id="p2t"></span><br>
-$f_{p_2}=$<span id="fp2t"></span> $\mathrm{Hz}$<br>
+$p_1=$<span id="p1t" class="cal"></span><br>
+$f_{p_1}=$<span id="fp1t" class="cal"></span> $\mathrm{Hz}$<br>
+$p_2=$<span id="p2t" class="cal"></span><br>
+$f_{p_2}=$<span id="fp2t" class="cal"></span> $\mathrm{Hz}$<br>
 <br>零点<br>
-$z=$<span id="z1t"></span><br>
-$f_{z}=$<span id="fz1t"></span> $\mathrm{Hz}$<br>
+$z=$<span id="z1t" class="cal"></span><br>
+$f_{z}=$<span id="fz1t" class="cal"></span> $\mathrm{Hz}$<br>
 </td></tr></table>
 <form name="tf">
 LTspice用伝達関数<input type="text" name="ltstf" style="width:500px;background-color:#ffffee" readonly>
@@ -131,6 +156,74 @@ var spct=document.getElementById('staticphasegraph').getContext('2d');
 var bct=document.getElementById('bode').getContext('2d');
 var param=new Array(11);
 var Vin,Vout,Ld,Cd,R,Rc,n,CQ1,CQ2,Ll,fsw;
+
+function ripple(){
+	paramSet();
+	var T2,T3,T4,ild,p,alpha,mu;
+	var dild,icdrms;
+	var i,j;
+	var dt=1/(20000*fsw);
+	var integral=0;
+	var z1=0,z2=0,z3=0;
+	var voutmax=-1.7976931348623157e+308,voutmin=1.7976931348623157e+308;
+	var icmax=-1.7976931348623157e+308,icmin=1.7976931348623157e+308;
+	var vldn,ildn;
+	var voutn,icdn;
+	var ildave=0,ildmax=0;
+	var icdave=0,icdrms=0;
+	if(fsw==0)return;
+	
+	ild=Vout/R;
+	p=Vin*R/(Vout*n);
+	mu=Vout*(R+Math.pow(n*p,2)*fsw*CQ1)/(Vin*n*R);
+	alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
+
+	T2=Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))+Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll));
+	T3=alpha/(2*fsw);
+	T4=T3+CQ1*p;
+	dild=1/Ld*(Vin*n-Vout)*(T3-T2+CQ1/(2*ild*n*n)*(Vin*n-Vout));
+	
+	for(i=0;i<2;i++){
+		for(j=0;j<=1/(2*fsw);j+=dt){
+			if(j<=T2)vldn=-Vout;
+			if(T2<j && j<=T3)vldn=Vin*n-Vout;
+			if(T3<j && j<=T4)vldn=Vin*n-Vout-ild*n*n/CQ1*(j-T3);
+			if(T4<j)vldn=-Vout;
+			ildn=z1+(vldn*dt/(2*Ld));
+			z1=ildn+(vldn*dt/(2*Ld));
+			voutn=(ildn*R*(2*Cd*Rc+dt)+z2)*(1/(2*Cd*(Rc+R)+dt));
+			z2=ildn*R*(dt-2*Cd*Rc)+(2*Cd*(Rc+R)-dt)*voutn;
+			icdn=(ildn*R*2*Cd+z3)*(1/(2*Cd*(Rc+R)+dt));
+			z3=(2*Cd*(Rc+R)-dt)*icdn-ildn*R*2*Cd;
+			if(i==0){
+				ildave+=ildn*dt*2*fsw;
+				if(ildmax<ildn)ildmax=ildn;
+				icdave+=icdn*dt*2*fsw;
+				if(voutmax<voutn)voutmax=voutn;
+				if(voutmin>voutn)voutmin=voutn;
+				if(icmax<icdn)icmax=icdn;
+				if(icmin>icdn)icmin=icdn;
+			}else{
+				icdrms+=Math.pow(icdn-icdave,2)*dt;
+			}
+		}
+	}
+	
+	document.getElementById("ripplevoltd").innerText=((voutmax-voutmin)/Vin*n).toFixed(10);
+	document.getElementById("ralpha").innerText=alpha.toFixed(4);
+	
+	document.getElementById("Lcurrentave").innerText=(Vout/R).toFixed(4);
+	document.getElementById("Lcurrentpeak").innerText=(ildmax-ildave+Vout/R).toFixed(4);
+	document.getElementById("Lripplecurrentpp").innerText=dild.toFixed(4);
+	document.getElementById("Lripplecurrentd").innerText=(dild/ild).toFixed(4);
+
+	document.getElementById("Cripplecurrentrms").innerText=Math.sqrt(2*fsw*icdrms).toFixed(4);
+	document.getElementById("Cripplecurrentpp").innerText=(icmax-icmin).toFixed(4);
+	document.getElementById("Voutripplepp").innerText=(voutmax-voutmin).toFixed(5);
+	document.getElementById("Voutrippled").innerText=((voutmax-voutmin)/Vout).toFixed(8);
+	if(dild/ild>=2)document.getElementById("riperror").innerHTML="<font color=red>電流不連続モードとなっています。インダクタ電流リプル率が2未満となるようにしてください。</font>";
+
+}
 
 function zvsGraph(dts,loadrs,loadrg,lat,mer){
 	dts=Number(dts);
@@ -482,6 +575,9 @@ function paramSet(){
 					param[i]=param[i].substr(0,param[i].length-1);
 			}
 		}
+		if(isNaN(param[i])){
+			param[i]=0;
+		}else if(param[i]<0) param[i]=0;
 	}
 	Vin=Number(param[0]);
 	Vout=Number(param[1]);
@@ -510,6 +606,7 @@ function paramSet(){
 }
 
 function allc(){
+	ripple();
 	zvsGraph(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value,document.zvsf.lat.value,document.zvsf.mer.value);
 	zvsGraphPlot(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value);
 	staticVoltGraph(document.voltf.vom.value,document.voltf.lat.value,document.voltf.mer.value);
