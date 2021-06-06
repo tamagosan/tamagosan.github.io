@@ -221,8 +221,11 @@ function ripple(){
 	document.getElementById("Cripplecurrentpp").innerText=(icmax-icmin).toFixed(4);
 	document.getElementById("Voutripplepp").innerText=(voutmax-voutmin).toFixed(5);
 	document.getElementById("Voutrippled").innerText=((voutmax-voutmin)/Vout).toFixed(8);
-	if(dild/ild>=2)document.getElementById("riperror").innerHTML="<font color=red>電流不連続モードとなっています。インダクタ電流リプル率が2未満となるようにしてください。</font>";
-
+	if(dild/ild>=2){
+		document.getElementById("riperror").innerHTML="<font color=red>電流不連続モードとなっています。インダクタ電流リプル率が2未満となるようにしてください。</font>";
+	}else{
+		document.getElementById("riperror").innerHTML="";
+	}
 }
 
 function zvsGraph(dts,loadrs,loadrg,lat,mer){
