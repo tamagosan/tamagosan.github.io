@@ -66,6 +66,7 @@ SI接頭辞: p,n,u,m,k,M
 <li><a href="#vout">出力電圧/位相シフト率 定常特性</a></li>
 <li><a href="#phase">位相シフト率/負荷 定常特性</a></li>
 <li><a href="#tf">出力電圧/位相シフト率 小信号伝達関数・周波数応答</a></li>
+<li><a href="#vt">インダクタ・トランス 電圧時間積</a></li>
 </ul>
 
 <hr><h2 id="ripple">二次側各リプル</h2>
@@ -145,6 +146,16 @@ $f_{z}=$<span id="fz1t" class="cal"></span> $\mathrm{Hz}$<br>
 LTspice用伝達関数<input type="text" name="ltstf" style="width:500px;background-color:#ffffee" readonly>
 </form><br>
 <button onClick="bode();bodePlot();">計算</button>
+<button onClick="window.scrollTo(0,0);">値入力へ</button>
+
+<hr><h2 id="vt">インダクタ・トランス 電圧時間積</h2>
+<table>
+<tr><td>漏れインダクタ</td><td><span id="vtleak" class="cal"></span> Wb</td></tr>
+<tr><td>平滑インダクタ</td><td><span id="vtchoke" class="cal"></span> Wb</td></tr>
+<tr><td>トランス 一次巻線</td><td><span id="vtprimaly" class="cal"></span> Wb</td></tr>
+<tr><td>トランス 二次巻線</td><td><span id="vtsecondly" class="cal"></span> Wb</td></tr>
+</table><br>
+<button onClick="vtProduct();">計算</button>
 <button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <script>
@@ -534,6 +545,46 @@ function bodePlot(){
 	}
 }
 
+function vtProduct(){
+	paramSet();
+	if(fsw==0)return;
+	var T1,T2,T3,T4,ild,p,alpha,mu;
+	var i;
+	var dt=1/(20000*fsw);
+	var vtleak=0,vtchoke=0;
+	var vttrpri=0;
+	
+	ild=Vout/R;
+	p=Vin*R/(Vout*n);
+	mu=Vout*(R+Math.pow(n*p,2)*fsw*CQ1)/(Vin*n*R);
+	alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
+	T1=Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll));
+	T2=T1+Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll));
+	T3=alpha/(2*fsw);
+	T4=T3+CQ1*p;
+	
+	for(i=0;i<=1/(2*fsw);i+=dt){
+		if(i<=T1){
+			vtleak+=ild*n*Math.sqrt(Ll/CQ2)*Math.sin(1/Math.sqrt(Ll*CQ2)*i)*dt;
+		}
+		if(T1<i && i<=T2){
+			vtleak+=Vin*dt;
+		}
+		if(T2<i && i<=T3){
+			vtchoke+=(Vin*n-Vout)*dt;
+			vttrpri+=Vin*dt;
+		}
+		if(T3<i && i<=T4){
+			if((Vin*n-Vout-ild*n*n/CQ1*(i-T3))>=0)vtchoke+=(Vin*n-Vout-ild*n*n/CQ1*(i-T3))*dt;
+			vttrpri+=(Vin-ild*n/CQ1*(i-T3))*dt;
+		}
+	}
+	document.getElementById("vtleak").innerText=vtleak;
+	document.getElementById("vtchoke").innerText=vtchoke;
+	document.getElementById("vtprimaly").innerText=vttrpri;
+	document.getElementById("vtsecondly").innerText=vttrpri*n;
+}
+
 function paramSet(){
 	param[0]=document.val.Vin.value;
 	param[1]=document.val.Vout.value;
@@ -614,6 +665,7 @@ function allc(){
 	staticPhaseGraphPlot(document.phasef.rs.value,document.phasef.rg.value);
 	bode();
 	bodePlot();
+	vtProduct();
 }
 
 bode();
