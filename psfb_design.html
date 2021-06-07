@@ -54,7 +54,7 @@ SI接頭辞: p,n,u,m,k,M
 <tr><td>トランス巻数比</td><td>$n$</td><td><input name="n"></td></tr>
 <tr><td>進みレグ 各アーム出力容量</td><td>$C_{Qa}$</td><td><input name="CQa">F</td></tr>
 <tr><td>遅れレグ 各アーム出力容量</td><td>$C_{Qb}$</td><td><input name="CQb">F</td></tr>
-<tr><td>漏れインダクタンス</td><td>$L_l$</td><td><input name="Ll">H</td></tr>
+<tr><td>共振用インダクタンス</td><td>$L_l$</td><td><input name="Ll">H</td></tr>
 <tr><td>スイッチング周波数</td><td>$f_{sw}$</td><td><input name="fsw">Hz</td></tr>
 <tr><td>位相シフト率</td><td>$\alpha$</td><td></td></tr>
 </table>
@@ -150,7 +150,7 @@ LTspice用伝達関数<input type="text" name="ltstf" style="width:500px;backgro
 
 <hr><h2 id="vt">インダクタ・トランス 電圧時間積</h2>
 <table>
-<tr><td>漏れインダクタ</td><td><span id="vtleak" class="cal"></span> Wb</td></tr>
+<tr><td>共振用インダクタ</td><td><span id="vtleak" class="cal"></span> Wb</td></tr>
 <tr><td>平滑インダクタ</td><td><span id="vtchoke" class="cal"></span> Wb</td></tr>
 <tr><td>トランス 一次巻線</td><td><span id="vtprimaly" class="cal"></span> Wb</td></tr>
 <tr><td>トランス 二次巻線</td><td><span id="vtsecondly" class="cal"></span> Wb</td></tr>
