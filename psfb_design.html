@@ -91,8 +91,8 @@ SI接頭辞: p,n,u,m,k,M
 最適デッドタイム：<span id="bdt" class="cal"></span> ns<br>
 必要最小負荷：<span id="mlr" class="cal"></span> Ω<br>
 <form name="zvsf">
-デッドタイム範囲<input name="dts" type="number" value="400">ns<br>
-負荷抵抗範囲<input name="rs" type="number" value="2">～<input name="rg" type="number" value="10">Ω<br>
+デッドタイム範囲<input name="dts" type="number" value="600">ns<br>
+負荷抵抗範囲<input name="rs" type="number" value="2">～<input name="rg" type="number" value="20">Ω<br>
 目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
 </form><br>
 <button onClick="zvsGraph(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value,document.zvsf.lat.value,document.zvsf.mer.value);zvsGraphPlot(document.zvsf.dts.value,document.zvsf.rs.value,document.zvsf.rg.value);">計算</button>
@@ -114,7 +114,7 @@ $V_{out}=$<span id="Vout" class="cal"></span> $\mathrm{V}$ の場合 $\alpha=$<s
 $R=$<span id="R" class="cal"></span> $\mathrm{\Omega}$ の場合 $\alpha=$<span id="palpha" class="cal"></span><br>
 <span id="perror" class="cal"></span>
 <form name="phasef">
-負荷抵抗範囲<input name="rs" type="number" value="2">～<input name="rg" type="number" value="10">Ω<br>
+負荷抵抗範囲<input name="rs" type="number" value="0">～<input name="rg" type="number" value="20">Ω<br>
 目盛数 横線<input name="lat" type="number" value="5"> 縦線<input name="mer" type="number" value="5">
 </form><br>
 <button onClick="staticPhaseGraph(document.phasef.rs.value,document.phasef.rg.value,document.phasef.lat.value,document.phasef.mer.value);staticPhaseGraphPlot(document.phasef.rs.value,document.phasef.rg.value);">計算</button>
@@ -351,7 +351,7 @@ function staticVoltGraphPlot(vomax){
 		document.getElementById("valpha").innerText="";
 	}else{
 		document.getElementById("verror").innerHTML="";
-		document.getElementById("valpha").innerText=alpha.toFixed(3);
+		document.getElementById("valpha").innerText=alpha.toFixed(4);
 	}
 }
 
@@ -403,14 +403,11 @@ function staticPhaseGraphPlot(loadrs,loadrg){
 		alpha=mu-2*fsw*(p*CQ1-Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll))-Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll)));
 		spct.beginPath();
 		spct.strokeStyle="rgb(255,0,0)";
-		if(i==0){
-			if(alpha>1)alpha=1;
-			lo=-alpha*400+410;
-		}
+		if(i==0)lo=-alpha*400+410;
 		if(alpha<=1){
 			spct.moveTo(i*400/plot+45,lo);
 			spct.lineTo((i+1)*400/plot+45,-alpha*400+410);
-		}
+		}else alpha=1;
 		lo=-alpha*400+410;
 		spct.stroke();
 	}
@@ -423,7 +420,7 @@ function staticPhaseGraphPlot(loadrs,loadrg){
 		document.getElementById("palpha").innerText="";
 	}else{
 		document.getElementById("perror").innerHTML="";
-		document.getElementById("palpha").innerText=alpha.toFixed(3);
+		document.getElementById("palpha").innerText=alpha.toFixed(4);
 	}
 }
 
