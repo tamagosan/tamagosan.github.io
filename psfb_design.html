@@ -40,7 +40,7 @@ span.cal{
 <title>PSFBコンバータ設計支援ツール</title>
 </head><body bgcolor="#ffffee">
 <h1>PSFBコンバータ設計支援ツール</h1>
-[注意] 電流連続モードでの状態平均化法による計算をします。電流連続モードかつZVS可能な条件で使用してください。<br><br>
+[注意] 電流連続モードでの状態平均化法による計算をします。平滑インダクタ電流と平滑コンデンサ電圧のリプルが十分小さい条件で使用してください。<br><br>
 <img width=800 src="psfb_design_fig.png"><br>
 SI接頭辞: p,n,u,m,k,M
 <form name="val">
@@ -70,6 +70,7 @@ SI接頭辞: p,n,u,m,k,M
 </ul>
 
 <hr><h2 id="ripple">二次側各リプル</h2>
+使用する値: $V_{in},V_{out},L_d,C_d,R,R_C,n,C_{Qa},C_{Qb},L_l,f_{sw}$<br><br>
 インダクタ電圧両振幅に対して出力電圧リプル両振幅が十分小さい仮定で計算しています。<br>
 (出力電圧リプル両振幅/インダクタ電圧両振幅=<span id="ripplevoltd" class="cal"></span>)<br>
 <span id="riperror" class="cal"></span><br>
@@ -88,6 +89,7 @@ SI接頭辞: p,n,u,m,k,M
 <button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <hr><h2 id="zvs">ZVS可能範囲</h2>
+使用する値: $V_{in},V_{out},n,C_{Qb},L_l$<br><br>
 <canvas id="zvsgraph" width="480" height="450"></canvas><br>
 最適デッドタイム：<span id="bdt" class="cal"></span> ns<br>
 必要最小負荷：<span id="mlr" class="cal"></span> Ω<br>
@@ -100,6 +102,7 @@ SI接頭辞: p,n,u,m,k,M
 <button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <hr><h2 id="vout">出力電圧/位相シフト率 定常特性</h2>
+使用する値: $V_{in},V_{out},R,n,C_{Qa},C_{Qb},L_l,f_{sw}$<br><br>
 <canvas id="staticvoltgraph" width="480" height="450"></canvas><br>
 $V_{out}=$<span id="Vout" class="cal"></span> $\mathrm{V}$ の場合 $\alpha=$<span id="valpha" class="cal"></span><br>
 <span id="verror" class="cal"></span>
@@ -111,6 +114,7 @@ $V_{out}=$<span id="Vout" class="cal"></span> $\mathrm{V}$ の場合 $\alpha=$<s
 <button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <hr><h2 id="phase">位相シフト率/負荷 定常特性</h2>
+使用する値: $V_{in},V_{out},R,n,C_{Qa},C_{Qb},L_l,f_{sw}$<br><br>
 <canvas id="staticphasegraph" width="480" height="450"></canvas><br>
 $R=$<span id="R" class="cal"></span> $\mathrm{\Omega}$ の場合 $\alpha=$<span id="palpha" class="cal"></span><br>
 <span id="perror" class="cal"></span>
@@ -122,6 +126,7 @@ $R=$<span id="R" class="cal"></span> $\mathrm{\Omega}$ の場合 $\alpha=$<span 
 <button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <hr><h2 id="tf">出力電圧/位相シフト率 小信号伝達関数・周波数応答</h2>
+使用する値: $V_{in},V_{out},L_d,C_d,R,R_C,n,C_{Qa},C_{Qb},L_l,f_{sw}$<br><br>
 <canvas id="bode" width="480" height="420"></canvas>
 <table><tr><td width=300>
 \[
@@ -149,6 +154,7 @@ LTspice用伝達関数<input type="text" name="ltstf" style="width:500px;backgro
 <button onClick="window.scrollTo(0,0);">値入力へ</button>
 
 <hr><h2 id="vt">インダクタ・トランス 電圧時間積</h2>
+使用する値: $V_{in},V_{out},R,n,C_{Qa},C_{Qb},L_l,f_{sw}$<br><br>
 <table>
 <tr><td>共振用インダクタ</td><td><span id="vtleak" class="cal"></span> Wb</td></tr>
 <tr><td>平滑インダクタ</td><td><span id="vtchoke" class="cal"></span> Wb</td></tr>
@@ -277,15 +283,15 @@ function zvsGraphPlot(dts,loadrs,loadrg){
 	if(loadrs<0)loadrs=0;
 	if(loadrg<loadrs)loadrg=loadrs;
 
-	var p;
+	var p,Rx;
 	var plot=400;
 	var T1,T2;
 	var t1lo,t2lo;
 	var pls,plg;
 	paramSet();
 	for(i=0;i<plot;i++){
-		R=i/(plot/(loadrg-loadrs))+loadrs;
-		p=Vin*R/(Vout*n);
+		Rx=i/(plot/(loadrg-loadrs))+loadrs;
+		p=Vin*Rx/(Vout*n);
 		T1=Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll));
 		T2=T1+Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll));
 		zvsct.beginPath();
