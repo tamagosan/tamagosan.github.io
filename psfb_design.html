@@ -304,7 +304,7 @@ function zvsGraphPlot(dts,loadrs,loadrg){
 		zvsct.lineTo(i*400/plot+45,plg);
 		zvsct.stroke();
 	}
-	document.getElementById("bdt").innerText=(Math.sqrt(Ll*CQ2)/2*(Math.PI+1)*(1e+9)).toFixed(3);
+	document.getElementById("bdt").innerText=(Math.sqrt(Ll*CQ2)*Math.asin(Vout*n/Vin)*(1e+9)).toFixed(3);
 	document.getElementById("mlr").innerText=(Vout*n/Vin*Math.sqrt(Ll/CQ2)).toFixed(3);
 }
 
