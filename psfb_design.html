@@ -285,7 +285,7 @@ function zvsGraphPlot(dts,loadrs,loadrg){
 
 	var p,Rx;
 	var plot=400;
-	var T1,T2;
+	var T1,Tc;
 	var t1lo,t2lo;
 	var pls,plg;
 	paramSet();
@@ -293,11 +293,11 @@ function zvsGraphPlot(dts,loadrs,loadrg){
 		Rx=i/(plot/(loadrg-loadrs))+loadrs;
 		p=Vin*Rx/(Vout*n);
 		T1=Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll));
-		T2=T1+Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll));
+		Tc=T1+Ll/p*Math.sqrt(1-p*p*CQ2/Ll);
 		zvsct.beginPath();
 		zvsct.strokeStyle="rgb(255,100,100)";
 		pls=410-T1*100/(dts/(4e+9));
-		plg=410-T2*100/(dts/(4e+9));
+		plg=410-Tc*100/(dts/(4e+9));
 		if(pls<10)pls=10;
 		if(plg<10)plg=10;
 		zvsct.moveTo(i*400/plot+45,pls);
