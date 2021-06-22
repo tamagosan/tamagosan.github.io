@@ -39,7 +39,7 @@ span.cal{
 </script>
 <title>PSFBコンバータ設計支援ツール</title>
 </head><body bgcolor="#ffffee">
-<h1>位相シフトフルブリッジコンバータ設計支援ツール</h1>
+<h1>PSFBコンバータ設計支援ツール</h1>
 [注意] 電流連続モードでの状態平均化法による計算をします。平滑インダクタ電流と平滑コンデンサ電圧のリプルが十分小さい条件で使用してください。<br><br>
 <img width=800 src="psfb_design_fig.png"><br>
 SI接頭辞: p,n,u,m,k,M
@@ -237,8 +237,8 @@ function ripple(){
 	document.getElementById("Cripplecurrentpp").innerText=(icmax-icmin).toFixed(4);
 	document.getElementById("Voutripplepp").innerText=(voutmax-voutmin).toFixed(5);
 	document.getElementById("Voutrippled").innerText=((voutmax-voutmin)/Vout).toFixed(8);
-	if(ildmax-ildave+Vout/R-dild<0){
-		document.getElementById("riperror").innerHTML="<font color=red>電流不連続モードとなっています。</font>";
+	if(dild/ild>=2){
+		document.getElementById("riperror").innerHTML="<font color=red>電流不連続モードとなっています。インダクタ電流リプル率が2未満となるようにしてください。</font>";
 	}else{
 		document.getElementById("riperror").innerHTML="";
 	}
@@ -267,7 +267,7 @@ function zvsGraph(dts,loadrs,loadrg,lat,mer){
 	for(i=0;i<=mer;i++){
 		zvsct.moveTo(i*(400/mer)+45,10);
 		zvsct.lineTo(i*(400/mer)+45,410);
-		zvsct.fillText(Math.floor(((loadrg-loadrs)/mer*i+loadrs)*10)/10,i*(400/mer)+40,420);
+		zvsct.fillText(Math.floor(((loadrg-loadrs)/mer*i+loadrs)*100)/100,i*(400/mer)+40,420);
 	}
 	zvsct.stroke();
 	zvsct.rotate(-Math.PI/2);
@@ -285,7 +285,7 @@ function zvsGraphPlot(dts,loadrs,loadrg){
 
 	var p,Rx;
 	var plot=400;
-	var T1,Tc;
+	var T1,T2;
 	var t1lo,t2lo;
 	var pls,plg;
 	paramSet();
@@ -293,18 +293,18 @@ function zvsGraphPlot(dts,loadrs,loadrg){
 		Rx=i/(plot/(loadrg-loadrs))+loadrs;
 		p=Vin*Rx/(Vout*n);
 		T1=Math.sqrt(Ll*CQ2)*Math.asin(p*Math.sqrt(CQ2/Ll));
-		Tc=T1+Ll/p*Math.sqrt(1-p*p*CQ2/Ll);
+		T2=T1+Ll/p*(1+Math.sqrt(1-p*p*CQ2/Ll));
 		zvsct.beginPath();
 		zvsct.strokeStyle="rgb(255,100,100)";
 		pls=410-T1*100/(dts/(4e+9));
-		plg=410-Tc*100/(dts/(4e+9));
+		plg=410-T2*100/(dts/(4e+9));
 		if(pls<10)pls=10;
 		if(plg<10)plg=10;
 		zvsct.moveTo(i*400/plot+45,pls);
 		zvsct.lineTo(i*400/plot+45,plg);
 		zvsct.stroke();
 	}
-	document.getElementById("bdt").innerText=(Math.sqrt(Ll*CQ2)*Math.PI/2*1e+9).toFixed(3);
+	document.getElementById("bdt").innerText=(Math.sqrt(Ll*CQ2)/2*(Math.PI+1)*(1e+9)).toFixed(3);
 	document.getElementById("mlr").innerText=(Vout*n/Vin*Math.sqrt(Ll/CQ2)).toFixed(3);
 }
 
@@ -393,7 +393,7 @@ function staticPhaseGraph(loadrs,loadrg,lat,mer){
 	for(i=0;i<=mer;i++){
 		spct.moveTo(i*(400/mer)+45,10);
 		spct.lineTo(i*(400/mer)+45,410);
-		spct.fillText(Math.floor(((loadrg-loadrs)/mer*i+loadrs)*10)/10,i*(400/mer)+40,420);
+		spct.fillText(Math.floor(((loadrg-loadrs)/mer*i+loadrs)*100)/100,i*(400/mer)+40,420);
 	}
 	spct.stroke();
 	spct.rotate(-Math.PI/2);
